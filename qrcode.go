@@ -56,12 +56,12 @@ import (
 	"image/color"
 	"image/png"
 	"io"
-	"io/ioutil"
+
 	"log"
 	"os"
 
-	bitset "github.com/skip2/go-qrcode/bitset"
-	reedsolomon "github.com/skip2/go-qrcode/reedsolomon"
+	bitset "github.com/RiddlerArgentina/go-qrcode/bitset"
+	reedsolomon "github.com/RiddlerArgentina/go-qrcode/reedsolomon"
 )
 
 // Encode a QR Code and return a raw PNG image.
@@ -112,13 +112,12 @@ func WriteColorFile(content string, level RecoveryLevel, size int, background,
 	var q *QRCode
 
 	q, err := New(content, level)
-
-	q.BackgroundColor = background
-	q.ForegroundColor = foreground
-
 	if err != nil {
 		return err
 	}
+
+	q.BackgroundColor = background
+	q.ForegroundColor = foreground
 
 	return q.WriteFile(size, filename)
 }
@@ -382,7 +381,7 @@ func (q *QRCode) WriteFile(size int, filename string) error {
 		return err
 	}
 
-	return ioutil.WriteFile(filename, png, os.FileMode(0644))
+	return os.WriteFile(filename, png, os.FileMode(0644))
 }
 
 // encode completes the steps required to encode the QR Code. These include
@@ -399,7 +398,7 @@ func (q *QRCode) encode() {
 	const numMasks int = 8
 	penalty := 0
 
-	for mask := 0; mask < numMasks; mask++ {
+	for mask := range numMasks {
 		var s *symbol
 		var err error
 
@@ -510,15 +509,6 @@ func (q *QRCode) encodeBlocks() *bitset.Bitset {
 	result.AppendNumBools(q.version.numRemainderBits, false)
 
 	return result
-}
-
-// max returns the maximum of a and b.
-func max(a int, b int) int {
-	if a > b {
-		return a
-	}
-
-	return b
 }
 
 // addPadding pads the encoded data upto the full length required.

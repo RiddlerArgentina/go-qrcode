@@ -5,8 +5,24 @@ package reedsolomon
 
 import "testing"
 
+func TestGFAddSubAndNewElement(t *testing.T) {
+	if newGFElement(0x5A) != gfElement(0x5A) {
+		t.Fatal("newGFElement did not round-trip")
+	}
+
+	if gfAdd(0x12, 0x34) != 0x26 {
+		t.Errorf("gfAdd(0x12, 0x34) = %d, want 0x26", gfAdd(0x12, 0x34))
+	}
+	if gfSub(0x12, 0x34) != gfAdd(0x12, 0x34) {
+		t.Error("gfSub should equal gfAdd in GF(2)")
+	}
+	if gfAdd(0xFF, 0xFF) != 0 {
+		t.Error("x + x should be 0")
+	}
+}
+
 func TestGFMultiplicationIdentities(t *testing.T) {
-	for i := 0; i < 256; i++ {
+	for i := range 256 {
 		value := gfElement(i)
 		if gfMultiply(gfZero, value) != gfZero {
 			t.Errorf("0 . %d != 0", value)

@@ -7,6 +7,19 @@ import (
 	"testing"
 )
 
+func TestGFPolyString(t *testing.T) {
+	zero := gfPoly{}
+	if zero.string(false) != "0" {
+		t.Errorf("empty poly string = %q, want 0", zero.string(false))
+	}
+
+	p := gfPoly{[]gfElement{1, 0, 3}}
+	got := p.string(false)
+	if got != "3x^2 + 1x^0" {
+		t.Errorf("string = %q, want 3x^2 + 1x^0", got)
+	}
+}
+
 func TestGFPolyAdd(t *testing.T) {
 	// a + b == result
 	var tests = []struct {
@@ -141,7 +154,13 @@ func TestGFPolyRemainder(t *testing.T) {
 		{
 			gfPoly{[]gfElement{1}},
 			gfPoly{[]gfElement{1, 0}},
-			gfPoly{[]gfElement{1}},
+			gfPoly{[]gfElement{0}},
+		},
+		// Unnormalised inputs (trailing zero coefficients) must be reduced first.
+		{
+			gfPoly{[]gfElement{1, 0, 0}},
+			gfPoly{[]gfElement{1, 0}},
+			gfPoly{[]gfElement{0}},
 		},
 		{
 			gfPoly{[]gfElement{1, 0, 1}},

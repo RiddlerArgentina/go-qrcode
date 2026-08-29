@@ -2,3 +2,12 @@
 *.png
 *.directory
 qrcode/qrcode
+
+# macOS
+.DS_Store
+DS_*
+
+# Go test coverage
+coverage.out
+coverage.html
+*.coverprofile

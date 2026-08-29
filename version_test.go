@@ -6,7 +6,7 @@ package qrcode
 import (
 	"testing"
 
-	bitset "github.com/skip2/go-qrcode/bitset"
+	bitset "github.com/RiddlerArgentina/go-qrcode/bitset"
 )
 
 func TestFormatInfo(t *testing.T) {
@@ -109,6 +109,48 @@ func TestVersionInfo(t *testing.T) {
 			t.Errorf("versionInfo test #%d got %s, expected %s", i, result.String(),
 				expected.String())
 		}
+	}
+}
+
+func TestGetQRCodeVersion(t *testing.T) {
+	if getQRCodeVersion(Low, 0) != nil {
+		t.Error("version 0 should be undefined")
+	}
+	if getQRCodeVersion(Low, 41) != nil {
+		t.Error("version 41 should be undefined")
+	}
+	if getQRCodeVersion(RecoveryLevel(99), 1) != nil {
+		t.Error("invalid recovery level should be undefined")
+	}
+
+	for version := 1; version <= 40; version++ {
+		for _, level := range []RecoveryLevel{Low, Medium, High, Highest} {
+			v := getQRCodeVersion(level, version)
+			if v == nil {
+				t.Errorf("missing version %d level %v", version, level)
+				continue
+			}
+			if v.version != version || v.level != level {
+				t.Errorf("got version=%d level=%v, want %d %v", v.version, v.level, version, level)
+			}
+			if v.numDataBits() <= 0 {
+				t.Errorf("version %d level %v has no data bits", version, level)
+			}
+			if v.numBlocks() <= 0 {
+				t.Errorf("version %d level %v has no blocks", version, level)
+			}
+		}
+	}
+}
+
+func TestVersionInfoNilBelowVersion7(t *testing.T) {
+	v := getQRCodeVersion(Low, 6)
+	if v.versionInfo() != nil {
+		t.Error("version 6 should not have version information")
+	}
+	v = getQRCodeVersion(Low, 7)
+	if v.versionInfo() == nil {
+		t.Error("version 7 should have version information")
 	}
 }
 

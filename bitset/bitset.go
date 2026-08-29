@@ -4,6 +4,7 @@
 // Package bitset implements an append only bit array.
 //
 // To create a Bitset and append some bits:
+//
 //	                                  // Bitset Contents
 //	b := bitset.New()                 // {}
 //	b.AppendBools(true, true, false)  // {1, 1, 0}
@@ -23,6 +24,8 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"slices"
+	"strings"
 )
 
 const (
@@ -49,7 +52,7 @@ func New(v ...bool) *Bitset {
 
 // Clone returns a copy.
 func Clone(from *Bitset) *Bitset {
-	return &Bitset{numBits: from.numBits, bits: from.bits[:]}
+	return &Bitset{numBits: from.numBits, bits: slices.Clone(from.bits)}
 }
 
 // Substr returns a substring, consisting of the bits from indexes start to end.
@@ -183,27 +186,27 @@ func (b *Bitset) AppendBools(bits ...bool) {
 
 // AppendNumBools appends num bits of value value.
 func (b *Bitset) AppendNumBools(num int, value bool) {
-	for i := 0; i < num; i++ {
+	for range num {
 		b.AppendBools(value)
 	}
 }
 
 // String returns a human readable representation of the Bitset's contents.
 func (b *Bitset) String() string {
-	var bitString string
+	var bitString strings.Builder
 	for i := 0; i < b.numBits; i++ {
 		if (i % 8) == 0 {
-			bitString += " "
+			bitString.WriteString(" ")
 		}
 
 		if (b.bits[i/8] & (0x80 >> byte(i%8))) != 0 {
-			bitString += "1"
+			bitString.WriteString("1")
 		} else {
-			bitString += "0"
+			bitString.WriteString("0")
 		}
 	}
 
-	return fmt.Sprintf("numBits=%d, bits=%s", b.numBits, bitString)
+	return fmt.Sprintf("numBits=%d, bits=%s", b.numBits, bitString.String())
 }
 
 // Len returns the length of the Bitset in bits.

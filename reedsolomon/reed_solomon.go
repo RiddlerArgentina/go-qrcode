@@ -13,7 +13,7 @@ package reedsolomon
 import (
 	"log"
 
-	bitset "github.com/skip2/go-qrcode/bitset"
+	bitset "github.com/RiddlerArgentina/go-qrcode/bitset"
 )
 
 // Encode data for QR Code 2005 using the appropriate Reed-Solomon code.
@@ -64,7 +64,7 @@ func rsGeneratorPoly(degree int) gfPoly {
 
 	generator := gfPoly{term: []gfElement{1}}
 
-	for i := 0; i < degree; i++ {
+	for i := range degree {
 		nextPoly := gfPoly{term: []gfElement{gfExpTable[i], 1}}
 		generator = gfPolyMultiply(generator, nextPoly)
 	}

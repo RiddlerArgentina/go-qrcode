@@ -3,6 +3,8 @@
 
 package qrcode
 
+import "strings"
+
 // symbol is a 2D array of bits representing a QR Code symbol.
 //
 // A symbol consists of size*size modules, with each module normally drawn as a
@@ -20,7 +22,6 @@ package qrcode
 // For ease of implementation, the functions to set/get bits ignore the border,
 // so (0,0)=a, (0,1)=b, (1,0)=c, and (1,1)=d. The entire symbol (including the
 // border) is returned by bitmap().
-//
 type symbol struct {
 	// Value of module at [y][x]. True is set.
 	module [][]bool
@@ -119,22 +120,22 @@ func (m *symbol) bitmap() [][]bool {
 // string returns a pictorial representation of the symbol, suitable for
 // printing in a TTY.
 func (m *symbol) string() string {
-	var result string
+	var result strings.Builder
 
 	for _, row := range m.module {
 		for _, value := range row {
 			switch value {
 			case true:
-				result += "  "
+				result.WriteString("  ")
 			case false:
 				// Unicode 'FULL BLOCK' (U+2588).
-				result += "██"
+				result.WriteString("██")
 			}
 		}
-		result += "\n"
+		result.WriteString("\n")
 	}
 
-	return result
+	return result.String()
 }
 
 // Constants used to weight penalty calculations. Specified by ISO/IEC

@@ -5,6 +5,7 @@ package bitset
 
 import (
 	rand "math/rand"
+	"strings"
 	"testing"
 )
 
@@ -33,7 +34,7 @@ func TestAppend(t *testing.T) {
 
 	rng := rand.New(rand.NewSource(1))
 
-	for i := 0; i < len(randomBools); i++ {
+	for i := range randomBools {
 		randomBools[i] = rng.Intn(2) == 1
 	}
 
@@ -154,7 +155,7 @@ func TestAppendBools(t *testing.T) {
 
 	rng := rand.New(rand.NewSource(1))
 
-	for i := 0; i < len(randomBools); i++ {
+	for i := range randomBools {
 		randomBools[i] = rng.Intn(2) == 1
 	}
 
@@ -181,7 +182,7 @@ func TestLen(t *testing.T) {
 
 	rng := rand.New(rand.NewSource(1))
 
-	for i := 0; i < len(randomBools); i++ {
+	for i := range randomBools {
 		randomBools[i] = rng.Intn(2) == 1
 	}
 
@@ -212,7 +213,7 @@ func equal(a []bool, b []bool) bool {
 		return false
 	}
 
-	for i := 0; i < len(a); i++ {
+	for i := range a {
 		if a[i] != b[i] {
 			return false
 		}
@@ -273,6 +274,79 @@ func TestByteAt(t *testing.T) {
 			t.Errorf("Got %#x, expected %#x", result, test.expected)
 		}
 	}
+}
+
+func TestClone(t *testing.T) {
+	original := New(b1, b0, b1, b1, b0)
+	cloned := Clone(original)
+
+	if !cloned.Equals(original) {
+		t.Errorf("Clone() = %s, want %s", cloned.String(), original.String())
+	}
+
+	original.AppendBools(b0)
+	if cloned.Equals(original) {
+		t.Error("Clone() still aliases the original Bitset after mutation")
+	}
+	if cloned.Len() != 5 {
+		t.Errorf("cloned length = %d, want 5", cloned.Len())
+	}
+}
+
+func TestNewFromBase2String(t *testing.T) {
+	got := NewFromBase2String("1010 0101")
+	want := New(b1, b0, b1, b0, b0, b1, b0, b1)
+	if !got.Equals(want) {
+		t.Errorf("got %s, want %s", got.String(), want.String())
+	}
+
+	if NewFromBase2String("").Len() != 0 {
+		t.Error("empty string should produce an empty Bitset")
+	}
+}
+
+func TestAppendBytesAndNumBools(t *testing.T) {
+	b := New()
+	b.AppendBytes([]byte{0xAA, 0x0F})
+	want := NewFromBase2String("10101010 00001111")
+	if !b.Equals(want) {
+		t.Errorf("AppendBytes got %s, want %s", b.String(), want.String())
+	}
+
+	b = New()
+	b.AppendNumBools(4, true)
+	b.AppendNumBools(3, false)
+	want = New(b1, b1, b1, b1, b0, b0, b0)
+	if !b.Equals(want) {
+		t.Errorf("AppendNumBools got %s, want %s", b.String(), want.String())
+	}
+}
+
+func TestString(t *testing.T) {
+	s := New(b1, b0, b1).String()
+	if !strings.Contains(s, "numBits=3") {
+		t.Errorf("String() = %q, missing numBits", s)
+	}
+	if !strings.Contains(s, "1") || !strings.Contains(s, "0") {
+		t.Errorf("String() = %q, missing bit characters", s)
+	}
+}
+
+func TestEqualsDifferentLength(t *testing.T) {
+	a := New(b1, b0)
+	b := New(b1, b0, b1)
+	if a.Equals(b) || b.Equals(a) {
+		t.Error("Bitsets of different length should not be equal")
+	}
+}
+
+func TestAtOutOfRange(t *testing.T) {
+	defer func() {
+		if recover() == nil {
+			t.Error("At() out of range should panic")
+		}
+	}()
+	New(b1).At(1)
 }
 
 func TestSubstr(t *testing.T) {

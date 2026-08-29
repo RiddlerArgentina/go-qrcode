@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"testing"
 
-	bitset "github.com/skip2/go-qrcode/bitset"
+	bitset "github.com/RiddlerArgentina/go-qrcode/bitset"
 )
 
 func TestClassifyDataMode(t *testing.T) {
@@ -67,7 +67,21 @@ func TestByteModeLengthCalculations(t *testing.T) {
 		dataMode        dataMode
 		numSymbols      int
 		expectedLength  int
-	}{}
+	}{
+		{dataEncoderType1To9, dataModeByte, 0, 12},
+		{dataEncoderType1To9, dataModeByte, 1, 20},
+		{dataEncoderType1To9, dataModeByte, 17, 148},
+		{dataEncoderType1To9, dataModeByte, 256, -1},
+		{dataEncoderType10To26, dataModeByte, 1, 28},
+		{dataEncoderType27To40, dataModeByte, 1, 28},
+		{dataEncoderType1To9, dataModeNumeric, 1, 18},
+		{dataEncoderType1To9, dataModeNumeric, 3, 24},
+		{dataEncoderType1To9, dataModeNumeric, 4, 28},
+		{dataEncoderType1To9, dataModeAlphanumeric, 1, 19},
+		{dataEncoderType1To9, dataModeAlphanumeric, 2, 24},
+		{dataEncoderType10To26, dataModeNumeric, 1, 20},
+		{dataEncoderType27To40, dataModeAlphanumeric, 1, 23},
+	}
 
 	for i, test := range tests {
 		encoder := newDataEncoder(test.dataEncoderType)
@@ -371,6 +385,57 @@ func TestOptimiseEncoding(t *testing.T) {
 				t.Errorf("got %s, expected %s", segmentsString(encoder.optimised),
 					testModeSegmentsString(test.optimised))
 			}
+		}
+	}
+}
+
+func TestEncodeEmpty(t *testing.T) {
+	encoder := newDataEncoder(dataEncoderType1To9)
+	if _, err := encoder.encode(nil); err == nil {
+		t.Fatal("expected error encoding empty data")
+	}
+}
+
+func TestDataModeString(t *testing.T) {
+	tests := []struct {
+		mode dataMode
+		want string
+	}{
+		{dataModeNone, "none"},
+		{dataModeNumeric, "numeric"},
+		{dataModeAlphanumeric, "alphanumeric"},
+		{dataModeByte, "byte"},
+		{dataMode(0), "unknown"},
+	}
+	for _, test := range tests {
+		if got := dataModeString(test.mode); got != test.want {
+			t.Errorf("dataModeString(%v) = %q, want %q", test.mode, got, test.want)
+		}
+	}
+}
+
+func TestEncodeAlphanumericCharacter(t *testing.T) {
+	tests := []struct {
+		in   byte
+		want uint32
+	}{
+		{'0', 0},
+		{'9', 9},
+		{'A', 10},
+		{'Z', 35},
+		{' ', 36},
+		{'$', 37},
+		{'%', 38},
+		{'*', 39},
+		{'+', 40},
+		{'-', 41},
+		{'.', 42},
+		{'/', 43},
+		{':', 44},
+	}
+	for _, test := range tests {
+		if got := encodeAlphanumericCharacter(test.in); got != test.want {
+			t.Errorf("encodeAlphanumericCharacter(%q) = %d, want %d", test.in, got, test.want)
 		}
 	}
 }

@@ -82,6 +82,44 @@ func TestDecodeBasic(t *testing.T) {
 	}
 }
 
+func TestDecodeSelectedStrings(t *testing.T) {
+	if !*testDecode {
+		t.Skip("Decode tests not enabled")
+	}
+
+	// Mixed numeric/alphanumeric strings that historically exercised
+	// segment optimisation bugs. Ported from the add_special_string_tests branch.
+	testStrings := []string{
+		"8888888888",
+		"88888888885555",
+		"8888888888aaaa",
+		"8888888888aaaa8888",
+		"8888888888aaaa8888a8a8a8a",
+		"8888888888aaaa8888a8a8a8o",
+		"8aaaa8o",
+		"8aaaa8oooooo8o8o8o8o",
+		"16aaaa",
+		"2aaaa",
+		"3aaaa",
+		"a3aaaa",
+		"##3aaaa",
+	}
+
+	for _, content := range testStrings {
+		for _, level := range []RecoveryLevel{Low, Medium, High, Highest} {
+			q, err := New(content, level)
+			if err != nil {
+				t.Errorf("New(%q, %v): %s", content, level, err)
+				continue
+			}
+
+			if err := zbarimgCheck(q); err != nil {
+				t.Errorf("decode %q level=%v: %s", content, level, err)
+			}
+		}
+	}
+}
+
 func TestDecodeAllVersionLevels(t *testing.T) {
 	if !*testDecode {
 		t.Skip("Decode tests not enabled")
@@ -122,7 +160,7 @@ func TestDecodeAllCharacters(t *testing.T) {
 
 	// zbarimg has trouble with null bytes, hence start from ASCII 1.
 	for i := 1; i < 256; i++ {
-		content += string(i)
+		content += string(rune(i))
 	}
 
 	q, err := New(content, Low)
@@ -147,14 +185,14 @@ func TestDecodeFuzz(t *testing.T) {
 	const iterations int = 32
 	const maxLength int = 128
 
-	for i := 0; i < iterations; i++ {
+	for range iterations {
 		len := r.Intn(maxLength-1) + 1
 
 		var content string
-		for j := 0; j < len; j++ {
+		for range len {
 			// zbarimg seems to have trouble with special characters, test printable
 			// characters only for now.
-			content += string(32 + r.Intn(94))
+			content += string(rune(32 + r.Intn(94)))
 		}
 
 		for _, level := range []RecoveryLevel{Low, Medium, High, Highest} {
